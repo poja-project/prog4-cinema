@@ -1,0 +1,627 @@
+openapi: 3.0.3
+info:
+  title: API Gestion de Cinéma - POJA
+  version: "1.0.0"
+
+tags:
+  - name: Movies
+  - name: Projections
+  - name: Rooms
+  - name: Seats
+  - name: Reservations
+  - name: Users
+
+security:
+  - bearerAuth: []
+
+paths:
+  /movies:
+    get:
+      tags: [Movies]
+      summary: Lister les films
+      security: []
+      responses:
+        "200":
+          description: Liste des films
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+    put:
+      tags: [Movies]
+      summary: Modifier un film (MANAGER uniquement)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieInput"
+      responses:
+        "200":
+          description: Film mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /movies/{id}:
+    get:
+      tags: [Movies]
+      summary: Récupérer un film par id
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Détail du film
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projections:
+    get:
+      tags: [Projections]
+      summary: Lister les projections (accessible à tous)
+      security: []
+      responses:
+        "200":
+          description: Liste des projections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Projection"
+    put:
+      tags: [Projections]
+      summary: Modifier/créer une projection (MANAGER uniquement)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectionInput"
+      responses:
+        "200":
+          description: Projection mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projection"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Chevauchement de créneau dans la salle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /projections/{id}:
+    get:
+      tags: [Projections]
+      summary: Récupérer une projection par id
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Détail de la projection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /rooms:
+    get:
+      tags: [Rooms]
+      summary: Lister les salles
+      responses:
+        "200":
+          description: Liste des salles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Room"
+    put:
+      tags: [Rooms]
+      summary: Modifier une salle (MANAGER uniquement)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomInput"
+      responses:
+        "200":
+          description: Salle mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /seats:
+    get:
+      tags: [Seats]
+      summary: Lister les sièges
+      responses:
+        "200":
+          description: Liste des sièges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Seat"
+    put:
+      tags: [Seats]
+      summary: Modifier un siège (MANAGER uniquement)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeatInput"
+      responses:
+        "200":
+          description: Siège mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Seat"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /reservations:
+    get:
+      tags: [Reservations]
+      summary: Lister toutes les réservations (EMPLOYEE, MANAGER uniquement)
+      responses:
+        "200":
+          description: Liste des réservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reservation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /reservation:
+    post:
+      tags: [Reservations]
+      summary: Créer une réservation (tous rôles authentifiés)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationInput"
+      responses:
+        "201":
+          description: Réservation créée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Siège déjà réservé ou requête invalide
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Reservations]
+      summary: Modifier une réservation (CLIENT interdit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationInput"
+      responses:
+        "200":
+          description: Réservation mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /reservations/{id}:
+    get:
+      tags: [Reservations]
+      summary: >
+        Récupérer une réservation par id.
+        CLIENT : autorisé uniquement si propriétaire.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Détail de la réservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: CLIENT n'étant pas propriétaire de la réservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Reservations]
+      summary: >
+        Annuler une réservation.
+        CLIENT : autorisé uniquement si propriétaire.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Réservation supprimée
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Récupérer le profil de l'utilisateur connecté
+      responses:
+        "200":
+          description: Profil utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: >
+        Récupérer un utilisateur par id.
+        CLIENT : autorisé uniquement pour lui-même.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Détail utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Users]
+      summary: >
+        Modifier un utilisateur.
+        CLIENT : autorisé uniquement pour lui-même. EMPLOYEE : interdit.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "200":
+          description: Utilisateur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Non authentifié
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Authentifié mais rôle/ownership insuffisant
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Ressource inexistante
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 403
+        message:
+          type: string
+          example: "Access denied"
+        timestamp:
+          type: string
+          format: date-time
+
+    Genre:
+      type: string
+      enum:
+        - THRILLER
+        - ROMANCE
+        - COMEDY
+        - DRAMA
+        - ACTION
+        - SCI_FI
+        - FANTASY
+        - ANIMATION
+
+    UserRole:
+      type: string
+      enum:
+        - CLIENT
+        - EMPLOYEE
+        - MANAGER
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+        capacity:
+          type: integer
+      required: [id, number, capacity]
+
+    RoomInput:
+      type: object
+      properties:
+        number:
+          type: string
+        capacity:
+          type: integer
+      required: [number, capacity]
+
+    Seat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+        roomId:
+          type: string
+          format: uuid
+      required: [id, number, roomId]
+
+    SeatInput:
+      type: object
+      properties:
+        number:
+          type: string
+        roomId:
+          type: string
+          format: uuid
+      required: [number, roomId]
+
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        genres:
+          type: array
+          items:
+            $ref: "#/components/schemas/Genre"
+        description:
+          type: string
+        duration:
+          type: string
+          description: Durée au format ISO-8601 (ex. PT1H45M)
+          example: "PT1H45M"
+      required: [id, title, genres, duration]
+
+    MovieInput:
+      type: object
+      properties:
+        title:
+          type: string
+        genres:
+          type: array
+          items:
+            $ref: "#/components/schemas/Genre"
+        description:
+          type: string
+        duration:
+          type: string
+          example: "PT1H45M"
+      required: [title, genres, duration]
+
+    Projection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        movieId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        datetime:
+          type: string
+          format: date-time
+        seatPrice:
+          type: number
+          format: decimal
+      required: [id, movieId, roomId, datetime, seatPrice]
+
+    ProjectionInput:
+      type: object
+      properties:
+        movieId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        datetime:
+          type: string
+          format: date-time
+        seatPrice:
+          type: number
+          format: decimal
+      required: [movieId, roomId, datetime, seatPrice]
+
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        projectionId:
+          type: string
+          format: uuid
+        seatIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, projectionId, seatIds, createdAt]
+
+    ReservationInput:
+      type: object
+      properties:
+        projectionId:
+          type: string
+          format: uuid
+        seatIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required: [projectionId, seatIds]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthdate:
+          type: string
+          format: date
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required: [id, firstName, lastName, birthdate, email, role]
+
+    UserInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthdate:
+          type: string
+          format: date
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+          format: password
+      required: [firstName, lastName, birthdate, email]
